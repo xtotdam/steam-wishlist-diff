@@ -1,15 +1,5 @@
-try:
-    import urllib2
-except ImportError:
-    print 'fatal: can\'t import urllib2 module. Is it installed?'
-    exit(11)
-
-try:
-    from bs4 import BeautifulSoup
-except ImportError:
-    print 'fatal: can\'t import bs4 (BeautifulSoup) module. Is it installed?'
-    exit(12)
-
+import urllib2
+from bs4 import BeautifulSoup
 from time import strftime, localtime
 from sys import argv
 
@@ -68,8 +58,7 @@ for i in xrange(len(name)):
     l = len(name[i])
     out.write('{0:02d}  {1}{2}:  {3:7.2f} - {4:02d}% = {5:7.2f}\n'.format(
         i + 1,
-        ' ' * (max_len - l + 2),
-        name[i],
+        ' ' * (max_len - l + 2), name[i],
         orig_price[i],
         discount[i],
         final_price[i]))

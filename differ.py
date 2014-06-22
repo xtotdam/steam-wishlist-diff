@@ -1,10 +1,5 @@
 from os import listdir, getcwd
-
-try:
-    from difflib import context_diff
-except ImportError:
-    print 'fatal: can\'t import difflib module. Is it installed?'
-    exit(21)
+from difflib import context_diff
 from sys import stdout
 
 fl = []
@@ -28,6 +23,6 @@ diff = context_diff(s1, s2, fromfile=f1, tofile=f2, n=0)
 for line in diff:
     stdout.write(line)
 
-stdout.write('If nothing there, no price changes occurred\n')
+stdout.write('\n----------\nIf nothing there, no price changes occurred\n')
 
 raw_input()
