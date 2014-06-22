@@ -1,6 +1,8 @@
 steam-wishlist-diff
 ===================
 
+A simple way to track price fluctuations in Steam wishlist
+
 ###Dependencies###
 
 * urllib2
