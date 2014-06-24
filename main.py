@@ -22,6 +22,7 @@ discount = []
 orig_price = []
 final_price = []
 max_len = 0
+const_len = 40
 
 for item in x:
     cnt += 1
@@ -50,6 +51,8 @@ for item in x:
     discount.append(dsc)
     orig_price.append(op)
     final_price.append(fp)
+	
+if max_len < const_len : max_len = const_len
 
 out = open(fn+'.spdf','w')
 # out.write('{}\n'.format(dt))
