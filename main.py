@@ -1,7 +1,7 @@
 import urllib2
 from bs4 import BeautifulSoup
 from time import strftime, localtime
-from sys import argv
+from sys import argv, stdout
 
 if len(argv) > 1:
     account_name = argv[1]
@@ -40,7 +40,10 @@ for item in x:
         op = float(
             soup.find_all('div', attrs={'class': 'discount_original_price'})[0].string.split()[0].replace(',', '.'))
     except IndexError:
-        op = float(soup.find_all('div', attrs={'class': 'price'})[0].string.strip().split()[0].replace(',', '.'))
+        try:
+            op = float(soup.find_all('div', attrs={'class': 'price'})[0].string.strip().split()[0].replace(',', '.'))
+        except IndexError:
+            op = 0.
 
     try:
         fp = float(soup.find_all('div', attrs={'class': 'discount_final_price'})[0].string.split()[0].replace(',', '.'))
@@ -51,10 +54,10 @@ for item in x:
     discount.append(dsc)
     orig_price.append(op)
     final_price.append(fp)
-	
-if max_len < const_len : max_len = const_len
 
-out = open(fn+'.spdf','w')
+if max_len < const_len: max_len = const_len
+
+out = open(fn + '.spdf', 'w')
 # out.write('{}\n'.format(dt))
 
 for i in xrange(len(name)):
