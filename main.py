@@ -28,6 +28,7 @@ for item in x:
     cnt += 1
     soup = BeautifulSoup(str(item))
     nm = soup.find_all('h4')[0].string
+    nm = ''.join([i if ord(i) < 128 else '_' for i in nm])
     if len(nm) > max_len:
         max_len = len(nm)
 
