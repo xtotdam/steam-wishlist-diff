@@ -1,10 +1,16 @@
 import urllib2
 from bs4 import BeautifulSoup
 from time import strftime, localtime
+from os.path import exists
 from sys import argv, stdout
+
+# TODO: sort games by name
 
 if len(argv) > 1:
     account_name = argv[1]
+elif exists('account.txt'):
+    with open('account.txt', 'r') as f:
+        account_name = f.readline().strip()
 else:
     account_name = raw_input('Input your SteamCommunity account name: ')
 
