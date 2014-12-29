@@ -5,14 +5,14 @@ from sys import stdout
 fl = []
 
 for item in listdir(getcwd()):
-    if item[-4:] == 'spdf':
+    if item.endswith('spdf'):
         fl.append(item)
 
 f1 = fl[-2]
 f2 = fl[-1]
 
-s1 = open(f1, 'r').readlines()
-s2 = open(f2, 'r').readlines()
+s1 = [x.strip() + '\n' for x in open(f1, 'r').readlines()]
+s2 = [x.strip() + '\n' for x in open(f2, 'r').readlines()]
 
 d1 = '{}-{}-{}, {}:{}'.format(f1[4:6], f1[2:4], f1[:2], f1[6:8], f1[8:10])
 d2 = '{}-{}-{}, {}:{}'.format(f2[4:6], f2[2:4], f2[:2], f2[6:8], f2[8:10])
