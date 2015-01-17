@@ -1,9 +1,5 @@
 __author__ = 'xtotdam'
 
-# TODO: standalone differ
-# TODO: ability to choose what records to differ
-# TODO: ability to run in cron => create pop-ups
-
 import os
 import pickle
 import requests
@@ -146,6 +142,7 @@ def print_diff(old, new, stream=stdout, offset=25):
                      colored_change(item[1], item[2], unit='%') + '\n')
 
 if __name__ == '__main__':
+
     if os.path.exists('account.txt'):
         with open('account.txt', 'r') as f:
             account_name = f.readline().strip()
@@ -161,4 +158,4 @@ if __name__ == '__main__':
     except ValueError:
         print 'Database contains only one record. It is too early to compare anything.'
 
-
+    raw_input('___________________\nPress Enter to exit\n')
