@@ -100,14 +100,14 @@ def print_diff(old, new, stream=stdout, offset=25):
     oldk = set(old.keys())
     newk = set(new.keys())
 
-    stream.write('From ' + str(datetime.fromtimestamp(old['date'])) +
-                 ' to ' + str(datetime.fromtimestamp(new['date'])) + '\n')
+    stream.write(colorize('From ' + str(datetime.fromtimestamp(old['date'])) +
+                 ' to ' + str(datetime.fromtimestamp(new['date'])) + '\n', ansi=15))
 
-    stream.write('Games added:\n')
+    stream.write(colorize('Games added:\n', ansi=4))
     for item in newk - oldk:
         stream.write(item.rjust(offset) + '\n')
 
-    stream.write('Games removed:\n')
+    stream.write(colorize('Games removed:\n', ansi=4))
     for item in oldk - newk:
         stream.write(item.rjust(offset) + '\n')
 
@@ -126,17 +126,17 @@ def print_diff(old, new, stream=stdout, offset=25):
             discount_changes.append(
                 (item, old[item]['discount'], new[item]['discount']))
 
-    stream.write('Games moved:\n')
+    stream.write(colorize('Games moved:\n', ansi=4))
     for item in moves:
         stream.write(
             item[0].rjust(offset) + ':  ' + str(item[1]) + ' -> ' + str(item[2]) + '\n')
 
-    stream.write('Price changes:\n')
+    stream.write(colorize('Price changes:\n', ansi=4))
     for item in price_changes:
         stream.write(
             item[0].rjust(offset) + ':  ' + colored_change(item[1], item[2]) + '\n')
 
-    stream.write('Discount changes:\n')
+    stream.write(colorize('Discount changes:\n', ansi=4))
     for item in discount_changes:
         stream.write(item[0].rjust(offset) + ':  ' +
                      colored_change(item[1], item[2], unit='%') + '\n')
@@ -152,9 +152,15 @@ if __name__ == '__main__':
     record = get_data_from_steam(account_name)
     push_to_db(record)
 
+    maxLen = max([len(x) for x in record.keys()])
+    if maxLen < 25:
+        maxLen = 25
+    else:
+        maxLen += 10
+
     try:
         old, new = get_db()[-2:]
-        print_diff(old, new)
+        print_diff(old, new, offset=maxLen)
     except ValueError:
         print 'Database contains only one record. It is too early to compare anything.'
 
