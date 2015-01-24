@@ -65,21 +65,24 @@ def get_data_from_steam(account_name):
             price = soup.findAll(
                 'div', attrs={'class': 'discount_original_price'})[0].string
         price = price.strip().split(' ')[0]
-        price = int(price)
+        if price:
+            price = float(price)
+        else:
+            price = None
 
         try:
             discount = soup.findAll(
                 'div', attrs={'class': 'discount_pct'})[0].string
             discount = discount.strip().split(' ')[0][1:-1]
-            discount = int(discount)
+            discount = float(discount)
         except IndexError:
-            discount = 0
+            discount = 0.
 
         try:
             sale = soup.findAll(
                 'div', attrs={'class': 'discount_final_price'})[0].string
             sale = sale.strip().split(' ')[0]
-            sale = int(sale)
+            sale = float(sale)
         except IndexError:
             sale = price
 
