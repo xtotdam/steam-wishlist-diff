@@ -10,7 +10,7 @@ from sys import stdout
 try:
     from xtermcolor import colorize
 except ImportError:
-    def colorize(s, arg):
+    def colorize(s, ansi):
         return s
 
 dbfile = 'steam_db.pkl'
