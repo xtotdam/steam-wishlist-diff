@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 __author__ = 'xtotdam'
 
 import os
@@ -26,11 +28,7 @@ def get_db():
 
 
 def push_to_db(record):
-    try:
-        db = open(dbfile, 'rb')
-        records = pickle.load(db)
-    except (IOError, EOFError):
-        records = []
+    records = get_db()
 
     db = open(dbfile, 'wb')
     records.append(record)
@@ -66,7 +64,7 @@ def get_data_from_steam(account_name):
                 'div', attrs={'class': 'discount_original_price'})[0].string
         price = price.strip().split(' ')[0]
         if price:
-            price = float(price)
+            price = float(price.replace(',', '.'))
         else:
             price = None
 
@@ -74,7 +72,7 @@ def get_data_from_steam(account_name):
             discount = soup.findAll(
                 'div', attrs={'class': 'discount_pct'})[0].string
             discount = discount.strip().split(' ')[0][1:-1]
-            discount = float(discount)
+            discount = float(discount.replace(',', '.'))
         except IndexError:
             discount = 0.
 
@@ -82,7 +80,7 @@ def get_data_from_steam(account_name):
             sale = soup.findAll(
                 'div', attrs={'class': 'discount_final_price'})[0].string
             sale = sale.strip().split(' ')[0]
-            sale = float(sale)
+            sale = float(sale.replace(',', '.'))
         except IndexError:
             sale = price
 
@@ -92,8 +90,10 @@ def get_data_from_steam(account_name):
     return record
 
 
-def colored_change(old, new, unit=''):
-    if old > new:
+def colored_change(old, new, unit='', inverse=False):
+    condition = old > new
+    if inverse: condition = not condition
+    if condition:
         return colorize(str(old) + unit, ansi=1) + ' -> ' + colorize(str(new) + unit, ansi=2)
     else:
         return colorize(str(old) + unit, ansi=2) + ' -> ' + colorize(str(new) + unit, ansi=1)
@@ -142,7 +142,7 @@ def print_diff(old, new, stream=stdout, offset=25):
     stream.write(colorize('Discount changes:\n', ansi=4))
     for item in discount_changes:
         stream.write(item[0].rjust(offset) + ':  ' +
-                     colored_change(item[1], item[2], unit='%') + '\n')
+                     colored_change(item[1], item[2], unit='%', inverse=True) + '\n')
 
 if __name__ == '__main__':
 
