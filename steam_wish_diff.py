@@ -8,7 +8,7 @@ import requests
 import time
 from bs4 import BeautifulSoup
 from datetime import datetime
-from sys import stdout
+from sys import stdout, argv
 try:
     from xtermcolor import colorize
 except ImportError:
@@ -16,6 +16,8 @@ except ImportError:
         return s
 
 dbfile = 'steam_db.pkl'
+showmoves = False
+nowrite = False
 
 
 def get_db():
@@ -32,6 +34,21 @@ def push_to_db(record):
 
     db = open(dbfile, 'wb')
     records.append(record)
+    pickle.dump(records, db)
+
+
+def clear_last_records(n=1):
+    records = get_db()
+    print len(records), n
+
+    db = open(dbfile, 'wb')
+    for i in range(n):
+        try:
+            del records[-1]
+        except IndexError:
+            print 'Cannot delete last record: db seems to be empty'
+
+    print len(records)
     pickle.dump(records, db)
 
 
@@ -73,8 +90,13 @@ def get_data_from_steam(account_name):
                 'div', attrs={'class': 'discount_pct'})[0].string
             discount = discount.strip().split(' ')[0][1:-1]
             discount = float(discount.replace(',', '.'))
+
+            rr = requests.get('http://store.steampowered.com/app/' + str(gameId))
+            dsoup = BeautifulSoup(rr.text)
+            countdown = dsoup.findAll('p', attrs={'class': 'game_purchase_discount_countdown'})[0].string
         except IndexError:
             discount = 0.
+            countdown = ''           
 
         try:
             sale = soup.findAll(
@@ -84,8 +106,8 @@ def get_data_from_steam(account_name):
         except IndexError:
             sale = price
 
-        record[name] = {'num': num, 'id': gameId,
-                        'price': price, 'discount': discount, 'sale': sale}
+        record[name] = {'num': num, 'id': gameId, 'price': price,
+                        'discount': discount, 'sale': sale, 'countdown': countdown}
 
     return record
 
@@ -99,20 +121,24 @@ def colored_change(old, new, unit='', inverse=False):
         return colorize(str(old) + unit, ansi=2) + ' -> ' + colorize(str(new) + unit, ansi=1)
 
 
-def print_diff(old, new, stream=stdout, offset=25):
+def print_diff(old, new, stream=stdout, offset=25, showmoves=False):
     oldk = set(old.keys())
     newk = set(new.keys())
 
     stream.write(colorize('From ' + str(datetime.fromtimestamp(old['date'])) +
-                 ' to ' + str(datetime.fromtimestamp(new['date'])) + '\n', ansi=15))
+                 ' to ' + str(datetime.fromtimestamp(new['date'])) + '\n', ansi=12))
 
-    stream.write(colorize('Games added:\n', ansi=4))
-    for item in newk - oldk:
-        stream.write(item.rjust(offset) + '\n')
+    adds = newk - oldk
+    if adds:
+        stream.write(colorize('Games added:\n', ansi=11))
+        for item in adds:
+            stream.write(item.rjust(offset) + '\n')
 
-    stream.write(colorize('Games removed:\n', ansi=4))
-    for item in oldk - newk:
-        stream.write(item.rjust(offset) + '\n')
+    removes = oldk - newk
+    if removes:
+        stream.write(colorize('Games removed:\n', ansi=11))
+        for item in removes:
+            stream.write(item.rjust(offset) + '\n')
 
     inboth = oldk & newk - set(['date'])
     moves, price_changes, discount_changes = [], [], []
@@ -127,24 +153,35 @@ def print_diff(old, new, stream=stdout, offset=25):
 
         if old[item]['discount'] != new[item]['discount']:
             discount_changes.append(
-                (item, old[item]['discount'], new[item]['discount']))
+                (item, old[item]['discount'], new[item]['discount'], new[item]['countdown']))
 
-    stream.write(colorize('Games moved:\n', ansi=4))
-    for item in moves:
-        stream.write(
-            item[0].rjust(offset) + ':  ' + str(item[1]) + ' -> ' + str(item[2]) + '\n')
+    if showmoves:
+        if moves:
+            stream.write(colorize('Games moved:\n', ansi=11))
+            for item in moves:
+                stream.write(
+                    item[0].rjust(offset) + ':  ' + str(item[1]) + ' -> ' + str(item[2]) + '\n')
 
-    stream.write(colorize('Price changes:\n', ansi=4))
-    for item in price_changes:
-        stream.write(
-            item[0].rjust(offset) + ':  ' + colored_change(item[1], item[2]) + '\n')
+    if price_changes:
+        stream.write(colorize('Price changes:\n', ansi=11))
+        for item in price_changes:
+            stream.write(
+                item[0].rjust(offset) + ':  ' + colored_change(item[1], item[2]) + '\n')
 
-    stream.write(colorize('Discount changes:\n', ansi=4))
-    for item in discount_changes:
-        stream.write(item[0].rjust(offset) + ':  ' +
-                     colored_change(item[1], item[2], unit='%', inverse=True) + '\n')
+    if discount_changes:
+        stream.write(colorize('Discount changes:\n', ansi=11))
+        for item in discount_changes:
+            stream.write(item[0].rjust(offset) + ':  ' +
+                         colored_change(item[1], item[2], unit='%', inverse=True) + '  ' + item[3] + '\n')
 
 if __name__ == '__main__':
+
+    if '--moves' in argv: showmoves = True
+    if '--nowrite' in argv: nowrite = True
+    if '--deletelast' in argv: 
+        clear_last_records(n=1)
+        print 'Cleared last record'
+        exit()
 
     if os.path.exists('account.txt'):
         with open('account.txt', 'r') as f:
@@ -152,19 +189,22 @@ if __name__ == '__main__':
     else:
         account_name = raw_input('Input your SteamCommunity account name: ')
 
-    record = get_data_from_steam(account_name)
-    push_to_db(record)
+    records = get_db()
+    try:
+        old_record = records[-1]
+    except IndexError:
+        print len(records)
+        print 'Database contains only one record. It is too early to compare anything.'
+        exit()
 
-    maxLen = max([len(x) for x in record.keys()])
+    new_record = get_data_from_steam(account_name)
+    if not nowrite:
+        push_to_db(new_record)
+
+    maxLen = max([len(x) for x in new_record.keys()])
     if maxLen < 25:
         maxLen = 25
     else:
         maxLen += 10
 
-    try:
-        old, new = get_db()[-2:]
-        print_diff(old, new, offset=maxLen)
-    except ValueError:
-        print 'Database contains only one record. It is too early to compare anything.'
-
-    raw_input('___________________\nPress Enter to exit\n')
+    print_diff(old_record, new_record, offset=maxLen, showmoves=showmoves)
