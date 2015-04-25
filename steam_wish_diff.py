@@ -18,6 +18,7 @@ except ImportError:
 dbfile = 'steam_db.pkl'
 showmoves = False
 nowrite = False
+salesonly = False
 
 
 def get_db():
@@ -116,32 +117,35 @@ def colored_change(old, new, unit='', inverse=False):
     condition = old > new
     if inverse: condition = not condition
     if condition:
-        return colorize(str(old) + unit, ansi=1) + ' -> ' + colorize(str(new) + unit, ansi=2)
+        return colorize(str(old) + unit, ansi=9) + ' -> ' + colorize(str(new) + unit, ansi=2)
     else:
-        return colorize(str(old) + unit, ansi=2) + ' -> ' + colorize(str(new) + unit, ansi=1)
+        return colorize(str(old) + unit, ansi=2) + ' -> ' + colorize(str(new) + unit, ansi=9)
 
 
-def print_diff(old, new, stream=stdout, offset=25, showmoves=False):
+def print_diff(old, new, stream=stdout, offset=25, showmoves=False, salesonly=False):
     oldk = set(old.keys())
     newk = set(new.keys())
 
-    stream.write(colorize('From ' + str(datetime.fromtimestamp(old['date'])) +
-                 ' to ' + str(datetime.fromtimestamp(new['date'])) + '\n', ansi=12))
+    if not salesonly:
+        stream.write(colorize('From ' + str(datetime.fromtimestamp(old['date'])) +
+                     ' to ' + str(datetime.fromtimestamp(new['date'])) + '\n', ansi=12))
 
-    adds = newk - oldk
-    if adds:
-        stream.write(colorize('Games added:\n', ansi=11))
-        for item in adds:
-            stream.write(item.rjust(offset) + '\n')
+        adds = newk - oldk
+        if adds:
+            stream.write(colorize('Games added:\n', ansi=11))
+            for item in adds:
+                stream.write(item.rjust(offset) + '\n')
 
-    removes = oldk - newk
-    if removes:
-        stream.write(colorize('Games removed:\n', ansi=11))
-        for item in removes:
-            stream.write(item.rjust(offset) + '\n')
+        removes = oldk - newk
+        if removes:
+            stream.write(colorize('Games removed:\n', ansi=11))
+            for item in removes:
+                stream.write(item.rjust(offset) + '\n')
+    else:
+        stream.write(colorize(str(datetime.fromtimestamp(new['date'])) + '\n', ansi=12))
 
     inboth = oldk & newk - set(['date'])
-    moves, price_changes, discount_changes = [], [], []
+    moves, price_changes, discount_changes, sales = [], [], [], []
 
     for item in inboth:
         if old[item]['num'] != new[item]['num']:
@@ -155,29 +159,42 @@ def print_diff(old, new, stream=stdout, offset=25, showmoves=False):
             discount_changes.append(
                 (item, old[item]['discount'], new[item]['discount'], new[item]['countdown']))
 
-    if showmoves:
-        if moves:
-            stream.write(colorize('Games moved:\n', ansi=11))
-            for item in moves:
+        if new[item]['discount']:
+            sales.append((item, new[item]['discount'], new[item]['price'],
+                         new[item]['sale'], new[item]['countdown']))
+
+    if not salesonly:
+        if showmoves:
+            if moves:
+                stream.write(colorize('Games moved:\n', ansi=11))
+                for item in moves:
+                    stream.write(
+                        item[0].rjust(offset) + ':  ' + str(item[1]) + ' -> ' + str(item[2]) + '\n')
+
+        if price_changes:
+            stream.write(colorize('Price changes:\n', ansi=11))
+            for item in price_changes:
                 stream.write(
-                    item[0].rjust(offset) + ':  ' + str(item[1]) + ' -> ' + str(item[2]) + '\n')
+                    item[0].rjust(offset) + ':  ' + colored_change(item[1], item[2]) + '\n')
 
-    if price_changes:
-        stream.write(colorize('Price changes:\n', ansi=11))
-        for item in price_changes:
-            stream.write(
-                item[0].rjust(offset) + ':  ' + colored_change(item[1], item[2]) + '\n')
+        if discount_changes:
+            stream.write(colorize('Discount changes:\n', ansi=11))
+            for item in discount_changes:
+                stream.write(item[0].rjust(offset) + ':  ' +
+                             colored_change(item[1], item[2], unit='%', inverse=True) + '  ' + item[3] + '\n')
 
-    if discount_changes:
-        stream.write(colorize('Discount changes:\n', ansi=11))
-        for item in discount_changes:
-            stream.write(item[0].rjust(offset) + ':  ' +
-                         colored_change(item[1], item[2], unit='%', inverse=True) + '  ' + item[3] + '\n')
+    if sales:
+        stream.write(colorize('Sales right now:\n', ansi=11))
+        for item in sales:
+            stream.write(item[0].rjust(offset) + ':  ' + str(item[1]) + 
+                         '%  (' + colored_change(item[2], item[3]) + ')  ' + item[4] + '\n')
+
 
 if __name__ == '__main__':
 
     if '--moves' in argv: showmoves = True
     if '--nowrite' in argv: nowrite = True
+    if '--salesonly' in argv: salesonly = True
     if '--deletelast' in argv: 
         clear_last_records(n=1)
         print 'Cleared last record'
@@ -207,4 +224,4 @@ if __name__ == '__main__':
     else:
         maxLen += 10
 
-    print_diff(old_record, new_record, offset=maxLen, showmoves=showmoves)
+    print_diff(old_record, new_record, offset=maxLen, showmoves=showmoves, salesonly=salesonly)
