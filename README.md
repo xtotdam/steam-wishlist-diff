@@ -19,4 +19,4 @@ A simple way to track price fluctuations in Steam wishlist
 * ~~standalone differ~~
 * ability to choose what records to differ
 * ability to run in cron `-->` create pop-ups
-* rewrite diff output to hide empty points
+* ~~rewrite diff output to hide empty points~~
