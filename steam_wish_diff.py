@@ -199,6 +199,9 @@ if __name__ == '__main__':
         clear_last_records(n=1)
         print 'Cleared last record'
         exit()
+    if '--help' in argv:
+        print 'Usage: [--moves | --nowrite | --salesonly | --deletelast | --help]'
+        exit()
 
     if os.path.exists('account.txt'):
         with open('account.txt', 'r') as f:
