@@ -78,8 +78,7 @@ def get_data_from_steam(account_name):
         try:
             price = soup.findAll('div', attrs={'class': 'price'})[0].string
         except IndexError:
-            price = soup.findAll(
-                'div', attrs={'class': 'discount_original_price'})[0].string
+            price = soup.findAll('div', attrs={'class': 'discount_original_price'})[0].string
         price = price.strip().split(' ')[0]
         if price:
             price = float(price.replace(',', '.'))
@@ -87,8 +86,7 @@ def get_data_from_steam(account_name):
             price = None
 
         try:
-            discount = soup.findAll(
-                'div', attrs={'class': 'discount_pct'})[0].string
+            discount = soup.findAll('div', attrs={'class': 'discount_pct'})[0].string
             discount = discount.strip().split(' ')[0][1:-1]
             discount = float(discount.replace(',', '.'))
 
@@ -106,6 +104,9 @@ def get_data_from_steam(account_name):
             sale = float(sale.replace(',', '.'))
         except IndexError:
             sale = price
+
+        if countdown is None:
+            countdown = 'Error while parsing countdown =('
 
         record[name] = {'num': num, 'id': gameId, 'price': price,
                         'discount': discount, 'sale': sale, 'countdown': countdown}
@@ -180,14 +181,20 @@ def print_diff(old, new, stream=stdout, offset=25, showmoves=False, salesonly=Fa
         if discount_changes:
             stream.write(colorize('Discount changes:\n', ansi=11))
             for item in discount_changes:
-                stream.write(item[0].rjust(offset) + ':  ' +
+                try:
+                    stream.write(item[0].rjust(offset) + ':  ' +
                              colored_change(item[1], item[2], unit='%', inverse=True) + '  ' + item[3] + '\n')
+                except Exception:
+                    print item
 
     if sales:
         stream.write(colorize('Sales right now:\n', ansi=11))
         for item in sales:
-            stream.write(item[0].rjust(offset) + ':  ' + str(item[1]) + 
+            try:
+                stream.write(item[0].rjust(offset) + ':  ' + str(item[1]) + 
                          '%  (' + colored_change(item[2], item[3]) + ')  ' + item[4] + '\n')
+            except Exception:
+                print item
 
 
 if __name__ == '__main__':
