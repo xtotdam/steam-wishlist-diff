@@ -16,16 +16,16 @@ A simple way to track price fluctuations in Steam wishlist
 
 ####CL keys####
 
- - `--help` 
+ - `--help`
  - `--deletelast`
- -  `--moves` 
- - `--nowrite` 
+ - `--moves`
+ - `--nowrite`
  - `--salesonly`
 
 ###Todos###
 
-* ~~standalone differ~~
-* ability to choose what records to differ
-* ability to run in cron `-->` create pop-ups
-* ~~rewrite diff output to hide empty points~~
+* [x] standalone differ
+* [ ] ability to choose what records to differ
+* [ ] ability to run in cron `-->` create pop-ups
+* [x] rewrite diff output to hide empty points
 
