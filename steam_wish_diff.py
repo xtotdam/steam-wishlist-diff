@@ -56,14 +56,14 @@ def clear_last_records(n=1):
 def get_data_from_steam(account_name):
     r = requests.get(
         'http://steamcommunity.com/id/' + account_name + '/wishlist')
-    soup = BeautifulSoup(r.text)
+    soup = BeautifulSoup(r.text, "lxml")
     rowDivs = soup.body.findAll('div', attrs={'class': 'wishlistRow '})
 
     record = {}
     record['date'] = time.mktime(datetime.now().timetuple())
 
     for item in rowDivs:
-        soup = BeautifulSoup(str(item))
+        soup = BeautifulSoup(str(item), "lxml")
 
         gameId = item.get('id')[5:]
         gameId = int(gameId)
@@ -81,7 +81,10 @@ def get_data_from_steam(account_name):
             price = soup.findAll('div', attrs={'class': 'discount_original_price'})[0].string
         price = price.strip().split(' ')[0]
         if price:
-            price = float(price.replace(',', '.'))
+            if 'Free' in price:
+                price = None
+            else:
+                price = float(price.replace(',', '.'))
         else:
             price = None
 
@@ -91,11 +94,11 @@ def get_data_from_steam(account_name):
             discount = float(discount.replace(',', '.'))
 
             rr = requests.get('http://store.steampowered.com/app/' + str(gameId))
-            dsoup = BeautifulSoup(rr.text)
+            dsoup = BeautifulSoup(rr.text, "lxml")
             countdown = dsoup.findAll('p', attrs={'class': 'game_purchase_discount_countdown'})[0].string
         except IndexError:
             discount = 0.
-            countdown = ''           
+            countdown = ''
 
         try:
             sale = soup.findAll(
@@ -191,7 +194,7 @@ def print_diff(old, new, stream=stdout, offset=25, showmoves=False, salesonly=Fa
         stream.write(colorize('Sales right now:\n', ansi=11))
         for item in sales:
             try:
-                stream.write(item[0].rjust(offset) + ':  ' + str(item[1]) + 
+                stream.write(item[0].rjust(offset) + ':  ' + str(item[1]) +
                          '%  (' + colored_change(item[2], item[3]) + ')  ' + item[4] + '\n')
             except Exception:
                 print item
@@ -202,7 +205,7 @@ if __name__ == '__main__':
     if '--moves' in argv: showmoves = True
     if '--nowrite' in argv: nowrite = True
     if '--salesonly' in argv: salesonly = True
-    if '--deletelast' in argv: 
+    if '--deletelast' in argv:
         clear_last_records(n=1)
         print 'Cleared last record'
         exit()
